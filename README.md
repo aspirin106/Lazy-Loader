@@ -2,11 +2,17 @@
 
 Start local MCP servers when their tools are called. Keep stateful sessions alive, and stop servers that can safely restart after an idle timeout.
 
-[คู่มือภาษาไทย](README.th.md) · [Configuration reference](docs/CONFIGURATION.md) · [MIT license](LICENSE)
+[Thai guide](README.th.md) · [Configuration reference](docs/CONFIGURATION.md) · [MIT license](LICENSE)
 
 Lazy-Loader is a stdio MCP gateway written with the Node.js standard library. It serves tool metadata from local catalogs, so a client can discover tools without starting every backend. No npm dependencies, network listener, background service, or changes to your MCP client's source are required.
 
-**Windows is the tested platform.** Node.js 22 or newer is required. The gateway remains running while the client is connected. Each client connection has its own gateway and backend sessions.
+## Requirements
+
+- Node.js 22 or newer.
+- An MCP client that can launch local stdio servers, such as Codex.
+- The executables and dependencies of the backend servers you want to use. Backends are installed separately.
+
+**Windows is the tested platform.** The gateway remains running while the client is connected. Each client connection has its own gateway and backend sessions.
 
 ## How it works
 
