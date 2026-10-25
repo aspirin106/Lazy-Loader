@@ -4,6 +4,8 @@ Start local MCP servers when their tools are called. Keep stateful sessions aliv
 
 [Thai guide](README.th.md) · [Configuration reference](docs/CONFIGURATION.md) · [MIT license](LICENSE)
 
+![Lazy-Loader reads a cached catalog and starts only the backend called through a client connection.](assets/lazy-loader-overview.png)
+
 Lazy-Loader is a stdio MCP gateway written with the Node.js standard library. It serves tool metadata from local catalogs, so a client can discover tools without starting every backend. No npm dependencies, network listener, background service, or changes to your MCP client's source are required.
 
 ## Requirements
@@ -33,6 +35,8 @@ flowchart LR
 Tools are exposed as `server__tool`, such as `files__inspect`. Tool and prompt names change when you move a server behind the gateway. Update client allowlists and approval settings accordingly.
 
 ## Choose the session policy
+
+![Backend policies: keep the same session with idleSeconds zero, or stop when idle and start a new session on the next call.](assets/lazy-loader-policies.png)
 
 | Policy | Settings | Use when |
 | --- | --- | --- |

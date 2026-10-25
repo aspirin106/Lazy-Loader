@@ -4,6 +4,8 @@
 
 [English README](README.md) · [ค่าตั้งทั้งหมด](docs/CONFIGURATION.md) · [MIT License](LICENSE)
 
+![Gateway อ่าน catalog และเปิดเฉพาะ backend ที่ client เรียกใช้งาน](assets/lazy-loader-overview.png)
+
 ใช้ Node.js 22 ขึ้นไป ไม่มี npm dependency เพิ่ม และไม่ต้อง `npm install` รุ่นนี้ทดสอบบน Windows ตัว gateway ไม่เปิดพอร์ตเครือข่ายและไม่ติดตั้ง service เบื้องหลัง
 
 ## การทำงาน
@@ -15,6 +17,8 @@ Gateway หนึ่ง process อยู่ต่อหนึ่ง stdio conne
 ชื่อเครื่องมือเป็น `server__tool` เช่น `files__inspect` เมื่อย้าย server เข้ามา ต้องปรับ allowlist และ approval policy ที่อ้างชื่อเครื่องมือเดิมด้วย
 
 ## เลือกว่าจะเก็บเซสชันหรือปิดเมื่อว่าง
+
+![เปรียบเทียบการเก็บเซสชันเดิมกับการปิดเมื่อว่างและเริ่มเซสชันใหม่เมื่อถูกเรียกอีกครั้ง](assets/lazy-loader-policies.png)
 
 | นโยบาย | ค่าที่ใช้ | ลักษณะงาน |
 | --- | --- | --- |
