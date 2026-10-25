@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "servers": {
+    "stateless_demo": {
+      "command": "node",
+      "args": [
+        "test/mock-server.mjs"
+      ],
+      "cwd": "..",
+      "catalog": "stateless_demo.catalog.json",
+      "idleSeconds": 2,
+      "stateless": true,
+      "startupSeconds": 30,
+      "timeoutSeconds": 120
+    },
+    "session_demo": {
+      "command": "node",
+      "args": [
+        "test/mock-server.mjs",
+        "--mode",
+        "features"
+      ],
+      "cwd": "..",
+      "catalog": "session_demo.catalog.json",
+      "idleSeconds": 0,
+      "stateless": false,
+      "startupSeconds": 30,
+      "timeoutSeconds": 120
+    }
+  }
+}

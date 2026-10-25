@@ -1,0 +1,19 @@
+{
+  "name": "lazy-loader",
+  "version": "0.2.1",
+  "description": "On-demand stdio MCP gateway with session-preserving and idle-stop backend policies.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aspirin106/Lazy-Loader.git"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test test/gateway.test.mjs",
+    "check": "node --check gateway.mjs"
+  }
+}

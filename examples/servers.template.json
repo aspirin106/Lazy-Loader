@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "servers": {
+    "file_tools": {
+      "command": "C:/replace/Python/python.exe",
+      "args": [
+        "C:/replace/file-tools/server.py"
+      ],
+      "cwd": "C:/replace/file-tools",
+      "catalog": "catalogs/file_tools.json",
+      "idleSeconds": 30,
+      "stateless": true,
+      "startupSeconds": 30,
+      "timeoutSeconds": 120
+    },
+    "session_tools": {
+      "command": "C:/Program Files/nodejs/node.exe",
+      "args": [
+        "C:/replace/session-tools/server.js"
+      ],
+      "inheritCwd": true,
+      "envVars": [
+        "MCP_API_TOKEN"
+      ],
+      "catalog": "catalogs/session_tools.json",
+      "idleSeconds": 0,
+      "stateless": false,
+      "dynamicTools": true,
+      "startupSeconds": 30,
+      "timeoutSeconds": 120
+    },
+    "editor_relay": {
+      "command": "C:/replace/editor/relay.exe",
+      "args": [
+        "--mcp"
+      ],
+      "inheritCwd": true,
+      "catalog": "catalogs/editor_relay.json",
+      "idleSeconds": 0,
+      "stateless": false,
+      "dynamicTools": true,
+      "deferredDiscovery": true,
+      "startupSeconds": 15,
+      "timeoutSeconds": 120
+    }
+  }
+}
