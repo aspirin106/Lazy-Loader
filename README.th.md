@@ -16,6 +16,14 @@ Gateway หนึ่ง process อยู่ต่อหนึ่ง stdio conne
 
 ชื่อเครื่องมือเป็น `server__tool` เช่น `files__inspect` เมื่อย้าย server เข้ามา ต้องปรับ allowlist และ approval policy ที่อ้างชื่อเครื่องมือเดิมด้วย
 
+## Metadata และการใช้ token
+
+ตอนเริ่มเชื่อมต่อ Gateway ส่งเฉพาะคำแนะนำระดับ Gateway แล้วแนบ instructions ของ backend ไว้กับคำอธิบายเครื่องมือ prompt และ resource ของ backend นั้น คำแนะนำของ backend ที่ไม่ได้เกี่ยวข้องจึงไม่ติดไปกับเครื่องมืออื่น ชื่อเครื่องมือ schema และ annotations ยังอยู่ครบ
+
+Gateway ยังคงส่ง schema ของเครื่องมือทุกตัวใน `tools/list` ส่วน client เป็นผู้ตัดสินว่าจะโหลดเครื่องมือใดเข้าบริบทโมเดล หาก client รองรับการค้นหาเครื่องมือแบบ deferred ก็จะโหลดรายละเอียดเมื่อจำเป็น แต่ Gateway รับประกันจำนวน token ที่ลดลงไม่ได้ทุก client การซ่อนเครื่องมือไว้ก่อนมีความเสี่ยงใน Codex เพราะ [Codex ยัง refresh รายการ MCP tools ที่เปลี่ยนไม่สม่ำเสมอ](https://github.com/openai/codex/issues/10105)
+
+backend ที่มีเครื่องมือจำนวนมากจะมี instructions ซ้ำในคำอธิบายของเครื่องมือเหล่านั้น ทำให้ข้อมูลที่ส่งผ่าน `tools/list` อาจใหญ่ขึ้น ส่วน metadata ที่โมเดลเห็นจะลดลงเท่าใดขึ้นกับวิธีที่ client จัดการ server instructions และ deferred tools
+
 ## เลือกว่าจะเก็บเซสชันหรือปิดเมื่อว่าง
 
 ![เปรียบเทียบการเก็บเซสชันเดิมกับการปิดเมื่อว่างและเริ่มเซสชันใหม่เมื่อถูกเรียกอีกครั้ง](assets/lazy-loader-policies.png)
@@ -43,7 +51,7 @@ node gateway.mjs snapshot examples/demo.json session_demo
 node gateway.mjs check examples/demo.json
 ```
 
-ชุดทดสอบมี 23 tests และใช้ mock backend เท่านั้น ผล check ของ demo ต้องมี `valid: true`, `startedBackends: 0` และรายการ 8 กับ 11 เครื่องมือ ตัวแรกมี idle timeout 2 วินาที ตัวที่สองเก็บเซสชันหลังเริ่มใช้
+ชุดทดสอบใช้ mock backend เท่านั้น ผล check ของ demo ต้องมี `valid: true`, `startedBackends: 0` และรายการ 8 กับ 11 เครื่องมือ ตัวแรกมี idle timeout 2 วินาที ตัวที่สองเก็บเซสชันหลังเริ่มใช้
 
 Snapshot ตั้งใจเปิด backend เพื่ออ่าน metadata แล้วปิด การค้นเครื่องมือในการใช้งานปกติอ่าน catalog ที่เตรียมไว้ ไฟล์ catalog ผูกกับ launch settings จึงไม่รวมไว้ใน Git
 

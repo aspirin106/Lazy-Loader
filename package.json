@@ -1,6 +1,6 @@
 {
   "name": "lazy-loader",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "On-demand stdio MCP gateway with session-preserving and idle-stop backend policies.",
   "private": true,
   "type": "module",

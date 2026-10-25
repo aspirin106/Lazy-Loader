@@ -37,6 +37,8 @@ The catalog is replaced through a temporary file and rename only after discovery
 
 Catalogs contain backend-provided descriptions, schemas, instructions, and resource metadata. Treat generated catalogs as machine-specific data and review them before sharing.
 
+At initialization, the gateway sends only its own short instruction. It adds a backend's cached instructions to the descriptions of that backend's tools, prompts, resources, and resource templates. `tools/list` still includes every configured tool and its full schema, so model-context token use depends on the MCP client's tool-loading behavior. This keeps direct tool identities and client-side approval rules intact.
+
 ## Strict and dynamic tools
 
 Strict mode compares live tools, backend identity, and instructions with the catalog before dispatch. A negotiated protocol version can differ from the snapshot's version as long as it is supported. Version 0.2.1 fixes a false catalog mismatch caused by comparing those versions across sessions.

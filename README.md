@@ -34,6 +34,14 @@ flowchart LR
 
 Tools are exposed as `server__tool`, such as `files__inspect`. Tool and prompt names change when you move a server behind the gateway. Update client allowlists and approval settings accordingly.
 
+## Tool metadata and token use
+
+The gateway sends a short gateway-wide instruction at initialization. It adds each backend's instructions only to that backend's tool, prompt, and resource descriptions. Instructions from an unused backend no longer accompany unrelated tools. Direct tool names, schemas, and annotations remain available.
+
+The gateway still returns every configured tool schema in `tools/list`. The MCP client decides which definitions enter the model's context. Clients with deferred tool search can load relevant definitions when needed; the gateway cannot guarantee a token saving in every client. Hiding tools from the initial list would risk making them unavailable in Codex, which [does not reliably refresh changed MCP tool lists](https://github.com/openai/codex/issues/10105).
+
+A backend with many tools repeats its instructions in those tools' descriptions, so its `tools/list` response can grow. The smaller model-visible metadata depends on how the client presents server instructions and deferred tools.
+
 ## Choose the session policy
 
 ![Backend policies: keep the same session with idleSeconds zero, or stop when idle and start a new session on the next call.](assets/lazy-loader-policies.png)
@@ -58,7 +66,7 @@ node --version
 npm test
 ```
 
-The tests use mock backends only. They cover lazy startup, idle restart, session retention, queueing, cancellation, protocol negotiation, catalog validation, callbacks, and owned process cleanup. The suite currently contains 23 tests.
+The tests use mock backends only. They cover lazy startup, idle restart, session retention, queueing, cancellation, protocol negotiation, catalog validation, scoped instructions, callbacks, and owned process cleanup.
 
 Create catalogs for the two included mock servers.
 
