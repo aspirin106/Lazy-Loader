@@ -41,7 +41,8 @@ input.on('line', line => {
   if (method === 'initialize') {
     initParams = params;
     const initialize = () => result(id, { protocolVersion: options.mode === 'negotiate' ? params.protocolVersion : '2025-11-25', capabilities: { tools: { listChanged: true },
-      ...(options.mode === 'features' ? { prompts: { listChanged: true }, resources: { listChanged: true, subscribe: true }, completions: {}, experimental: { 'test/session-meta': {} } } : {}) }, serverInfo: { name: 'mock', version: '1.0.0' } });
+      ...(options.mode === 'features' ? { prompts: { listChanged: true }, resources: { listChanged: true, subscribe: true }, completions: {}, experimental: { 'test/session-meta': {} } } : {}) }, serverInfo: { name: 'mock', version: '1.0.0' },
+      ...(options.instructions ? { instructions: options.instructions } : {}) });
     if (options.mode === 'slow-init') setTimeout(initialize, 250);
     else initialize();
   }

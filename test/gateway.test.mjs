@@ -36,14 +36,52 @@ test('prompt catalog does not start a backend and prompt completion keeps the sa
   assert.deepEqual((await h.rpc('completion/complete',{ref:{type:'ref/prompt',name:'demo__guide'},argument:{name:'topic',value:'a'}})).result.completion.values,['guide']);
 });
 
+test('discovery keeps direct metadata and shows only the owning backend instructions', async t => {
+  const f = await fixture(t, { args: [resolve(root, 'test/mock-server.mjs'), '--mode', 'features'], idleSeconds: 0, stateless: false }, ['one', 'two']);
+  f.raw.servers.one.args = [...f.raw.servers.one.args, '--instructions', 'Only one backend may use this guidance.'];
+  f.raw.servers.two.args = [...f.raw.servers.two.args, '--instructions', 'Only two backend may use this guidance.'];
+  await f.save();
+  const configs = await f.prepare();
+  const h = f.start();
+  const init = await h.initialize();
+  assert.doesNotMatch(init.result.instructions, /Only (one|two) backend/);
+  const list = (await h.rpc('tools/list')).result.tools;
+  assert.equal(list.length, 22);
+  for (const alias of ['one', 'two']) {
+    const other = alias === 'one' ? 'two' : 'one';
+    const tool = list.find(item => item.name === `${alias}__echo`);
+    const cache = await readCatalog(configs.get(alias));
+    assert.deepEqual({ ...tool, name: 'echo', description: 'Test tool' }, cache.tools.find(item => item.name === 'echo'));
+    assert.match(tool.description, new RegExp(`Only ${alias} backend`));
+    assert.doesNotMatch(tool.description, new RegExp(`Only ${other} backend`));
+    const prompt = (await h.rpc('prompts/list')).result.prompts.find(item => item.name === `${alias}__guide`);
+    assert.match(prompt.description, new RegExp(`Only ${alias} backend`));
+    assert.doesNotMatch(prompt.description, new RegExp(`Only ${other} backend`));
+    const resource = (await h.rpc('resources/list')).result.resources.find(item => item.uri.startsWith(`mcp-lazy://${alias}/`));
+    const template = (await h.rpc('resources/templates/list')).result.resourceTemplates.find(item => item.uriTemplate.startsWith(`mcp-lazy://${alias}/`));
+    for (const item of [resource, template]) {
+      assert.match(item.description, new RegExp(`Only ${alias} backend`));
+      assert.doesNotMatch(item.description, new RegExp(`Only ${other} backend`));
+    }
+  }
+  assert.deepEqual(await events(f.eventFiles.one), []);
+  assert.deepEqual(await events(f.eventFiles.two), []);
+  assert.equal((await h.call('one__echo')).result.isError, undefined);
+  assert.deepEqual(await events(f.eventFiles.two), []);
+  assert.equal((await h.call('two__echo')).result.isError, undefined);
+});
+
 test('dynamic catalog refresh preserves a stateful backend and exposes newly announced tools', async t => {
-  const f=await fixture(t,{args:[resolve(root,'test/mock-server.mjs'),'--mode','features'],idleSeconds:0,stateless:false,dynamicTools:true});
+  const f=await fixture(t,{args:[resolve(root,'test/mock-server.mjs'),'--mode','features','--instructions','Dynamic backend guidance.'],idleSeconds:0,stateless:false,dynamicTools:true});
   await f.prepare();const h=f.start();await h.initialize();
   const pid=(await h.call('demo__context')).result.structuredContent.pid;
   await h.call('demo__add_tool');
   assert.ok(h.notifications.some(n=>n.method==='notifications/tools/list_changed'));
   const tools=(await h.rpc('tools/list')).result.tools;
-  assert.ok(tools.some(tool=>tool.name==='demo__new_tool'));
+  const added = tools.find(tool=>tool.name==='demo__new_tool');
+  assert.ok(added);
+  assert.equal(added.description, 'Test tool\n\n[demo server instructions]\nDynamic backend guidance.');
+  assert.equal((await h.rpc('tools/list')).result.tools.find(tool=>tool.name==='demo__new_tool').description, added.description);
   assert.equal((await h.call('demo__new_tool')).result.structuredContent.pid,pid);
 });
 

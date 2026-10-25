@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url';
 
 const VERSIONS = ['2025-11-25', '2025-06-18', '2024-11-05'];
 const MAX_LINE = 16 * 1024 * 1024;
-const INFO = { name: 'mcp-lazy-gateway', version: '0.2.1' };
+const INFO = { name: 'mcp-lazy-gateway', version: '0.2.2' };
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const validId = value => typeof value === 'string' || Number.isSafeInteger(value);
 const log = message => process.stderr.write(`[lazy-mcp] ${message}\n`);
@@ -429,13 +429,15 @@ class Backend {
 export async function serve(configs, input = process.stdin, output = process.stdout) {
   const tools = new Map();
   const backends = new Map();
-  const instructions = [];
   let closing = false;
   let phase = 'new';
   const inflight = new Map();
   const callbacks = new Map();
   let callbackId = 0;
   const session = {};
+  const withInstructions = (item, backend) => backend.cache.instructions
+    ? { ...item, description: [item.description, `[${backend.config.alias} server instructions]\n${backend.cache.instructions}`].filter(Boolean).join('\n\n') }
+    : item;
   const send = message => { if (!closing) output.write(JSON.stringify(message) + '\n'); };
   const errorResponse = (id, error) => send({ jsonrpc: '2.0', id, error: { code: error.code ?? -32603, message: error.message, ...(error.data === undefined ? {} : { data: error.data }) } });
   session.onRequest = (message, client) => {
@@ -468,11 +470,10 @@ export async function serve(configs, input = process.stdin, output = process.std
     const cache = await readCatalog(config);
     const backend = new Backend(config, cache, send, session);
     backends.set(config.alias, backend);
-    if (cache.instructions) instructions.push(`[${config.alias}] ${cache.instructions}`);
     for (const tool of cache.tools) {
       const name = `${config.alias}__${tool.name}`;
       requireThat(name.length <= 128 && !tools.has(name), `Invalid or duplicate public tool name: ${name}`);
-      const publicTool = { ...tool, name };
+      const publicTool = { ...withInstructions(tool, backend), name };
       delete publicTool.execution;
       tools.set(name, { backend, original: tool.name, publicTool });
     }
@@ -492,7 +493,7 @@ export async function serve(configs, input = process.stdin, output = process.std
       }
       for (const tool of validateTools(backend.cache.tools, backend.config.alias)) {
         const name = `${backend.config.alias}__${tool.name}`;
-        const publicTool = { ...tool, name }; delete publicTool.execution;
+        const publicTool = { ...withInstructions(tool, backend), name }; delete publicTool.execution;
         tools.set(name, { backend, original: tool.name, publicTool });
       }
     }
@@ -566,7 +567,7 @@ export async function serve(configs, input = process.stdin, output = process.std
         if (Object.keys(experimental).length) capabilities.experimental = experimental;
         result = { protocolVersion: VERSIONS.includes(params.protocolVersion) ? params.protocolVersion : VERSIONS[0],
           capabilities, serverInfo: INFO,
-          instructions: ['Tools use server__tool names. Backends may stop when idle; do not assume session state persists.', ...instructions].join('\n') };
+          instructions: 'Tools use server__tool names. Backends may stop when idle; do not assume session state persists.' };
       } else if (method === 'ping') result = {};
       else {
         if (phase !== 'ready') throw new RpcError(-32000, 'Initialize and send notifications/initialized first');
@@ -592,7 +593,7 @@ export async function serve(configs, input = process.stdin, output = process.std
           }
         } else if (method === 'prompts/list' && [...backends.values()].some(backend => backend.cache.capabilities?.prompts)) {
           if (params.cursor !== undefined) throw new RpcError(-32602, 'This catalog has no cursor');
-          result = { prompts: [...backends.values()].flatMap(backend => (backend.cache.prompts ?? []).map(prompt => ({ ...prompt, name: backend.config.alias + '__' + prompt.name }))) };
+          result = { prompts: [...backends.values()].flatMap(backend => (backend.cache.prompts ?? []).map(prompt => ({ ...withInstructions(prompt, backend), name: backend.config.alias + '__' + prompt.name }))) };
         } else if (method === 'prompts/get') {
           const target = promptTarget(params.name);
           result = await target.backend.request(method, { ...params, name: target.name }, controller.signal, id);
@@ -600,7 +601,7 @@ export async function serve(configs, input = process.stdin, output = process.std
           if (params.cursor !== undefined) throw new RpcError(-32602, 'This catalog has no cursor');
           const key = method === 'resources/list' ? 'resources' : 'resourceTemplates';
           const field = key === 'resources' ? 'uri' : 'uriTemplate';
-          result = { [key]: [...backends.values()].flatMap(backend => (backend.cache[key] ?? []).map(resource => ({ ...resource, [field]: uriFor(backend.config.alias, resource[field]) }))) };
+          result = { [key]: [...backends.values()].flatMap(backend => (backend.cache[key] ?? []).map(resource => ({ ...withInstructions(resource, backend), [field]: uriFor(backend.config.alias, resource[field]) }))) };
         } else if (['resources/read','resources/subscribe','resources/unsubscribe'].includes(method)) {
           const target = resourceTarget(params.uri);
           result = await target.backend.request(method, { ...params, uri: target.uri }, controller.signal, id);
